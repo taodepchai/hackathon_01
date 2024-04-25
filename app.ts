@@ -1,4 +1,5 @@
 // import Swal from "sweetalert2";
+import { v1 as uuidv4 } from 'uuid';
 interface IFeedback {
     feedbackId: string;
     score: number
@@ -25,7 +26,7 @@ class Feedback implements IFeedback {
         this.content = "";
 
         this.scoreActive = 10;
-        this.listFeedback = JSON.parse(localStorage.getItem("feedbacks")) || [];
+        this.listFeedback = JSON.parse(localStorage.getItem("feedbacks") || "[]");
         this.feedbackInput = document.querySelector("#feedbackInput") as HTMLInputElement;
         this.error = document.querySelector(".error") as HTMLElement;
         this.btnSend = document.querySelector(".btn-send") as HTMLElement;
@@ -65,17 +66,21 @@ class Feedback implements IFeedback {
 
     private handleScoreButtonClick(): void {
         let btnScoreGroup = document.querySelector(".btn-score-group") as HTMLElement;
-
+    
         btnScoreGroup.addEventListener("click", (e) => {
-            let targetButton = (e.target as HTMLElement).closest(".btn-score");
+            const targetButton = (e.target as HTMLElement).closest(".btn-score");
             if (targetButton) {
-                let allButtons = btnScoreGroup.querySelectorAll(".btn-score");
+                const allButtons = btnScoreGroup.querySelectorAll(".btn-score");
                 allButtons.forEach((button) => button.classList.remove("active"));
                 targetButton.classList.add("active");
-                this.scoreActive = +targetButton.dataset.score!;
+                const score = targetButton.dataset.score;
+                if (score !== undefined) {
+                    this.scoreActive = +score;
+                }
             }
         });
     }
+    
 
     private renderListFeedback(): void {
         let listFeedbackContent = document.querySelector(".list-feedback-content") as HTMLElement;
@@ -159,6 +164,7 @@ class Feedback implements IFeedback {
     }
     
     private handleSendButtonClick(): void {
+        
         this.btnSend.addEventListener("click", (e) => {
 
             Swal.fire({
@@ -170,20 +176,24 @@ class Feedback implements IFeedback {
                 cancelButtonColor: "##fc0303",
                 confirmButtonText: "Yes"
               }).then((result) => {
-                if (result.isConfirmed) {
+                if (result.isConfirmed) {       
                     e.stopPropagation();
                     let feedback = this.feedbackInput.value; 
             
                     let updatingFeedback = null;
-                    if (updatingFeedback) {
+                    if (updatingFeedback) { 
+                        let btnScoreGroup = document.querySelector(".btn-score-group") as HTMLElement;
+
+                        const allButtons = btnScoreGroup.querySelectorAll(".btn-score");
                         updatingFeedback.content = feedback;
                         updatingFeedback.score = this.scoreActive;
             
                         localStorage.setItem("feedbacks", JSON.stringify(this.listFeedback));
-            
                         this.feedbackInput.value = "";
                         updatingFeedback = null;
-            
+                        allButtons.forEach((button) => {
+                            button.classList.remove("active");
+                        });
                         this.feedbackInput.focus();
             
                         this.renderListFeedback();
